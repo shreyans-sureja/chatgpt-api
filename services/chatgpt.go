@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/shreyans-sureja/chatgpt-api/constants"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -17,14 +18,19 @@ type ChatgptPayload struct {
 	Prompt           string   `json:"prompt"`
 	Temperature      int      `json:"temperature"`
 	MaxTokens        int      `json:"max_tokens"`
-	TopP             float64  `json:"top_p"`
-	FrequencyPenalty float64  `json:"frequency_penalty"`
-	PresencePenalty  float64  `json:"presence_penalty"`
-	Stop             []string `json:"stop"`
+	TopP             float64  `json:"top_p,omitempty"`
+	FrequencyPenalty float64  `json:"frequency_penalty,omitempty"`
+	PresencePenalty  float64  `json:"presence_penalty,omitempty"`
+	Stop             []string `json:"stop,omitempty"`
 }
 
 type ChatgptResponsePayload struct {
-	Error map[string]interface{} `json:"error"`
+	Error   map[string]interface{} `json:"error"`
+	Choices []chatgptAnswers       `json:"choices"`
+}
+
+type chatgptAnswers struct {
+	Text string `json:"text"`
 }
 
 func ChatgptAPICall(cp ChatgptPayload) (ChatgptResponsePayload, error) {
@@ -44,10 +50,15 @@ func ChatgptAPICall(cp ChatgptPayload) (ChatgptResponsePayload, error) {
 
 	req.Header.Add("Authorization", "Bearer "+os.Getenv("CHATGPT_API_KEY"))
 	req.Header.Set("Content-Type", "application/json")
-	client := http.Client{Timeout: time.Duration(10) * time.Second}
+	client := http.Client{Timeout: time.Duration(100) * time.Second}
 	resp, err := client.Do(req)
 	serviceResponse, err := ioutil.ReadAll(resp.Body)
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(resp.Body)
 
 	if err != nil {
 		return chatgptResponsePayload, err

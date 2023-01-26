@@ -32,9 +32,14 @@ func main() {
 			break
 		}
 		payload := createGPTPayload(text)
-		_, err := services.ChatgptAPICall(payload)
+		answer, err := services.ChatgptAPICall(payload)
 		if err != nil {
 			log.Fatalln("Error while calling chat gpt api: ", err)
+		}
+		if len(answer.Choices) != 0 && len(answer.Choices[0].Text) != 0 {
+			fmt.Println("answer: ", answer.Choices[0].Text)
+		} else {
+			log.Println("Chatgpt gave unusal response: ", answer)
 		}
 
 	}
@@ -42,13 +47,9 @@ func main() {
 
 func createGPTPayload(text string) services.ChatgptPayload {
 	return services.ChatgptPayload{
-		Model:            constants.CHATGPT_TEXT_MODEL,
-		Prompt:           text,
-		Stop:             constants.CHATGPT_STOP,
-		Temperature:      0,
-		MaxTokens:        100,
-		TopP:             1.0,
-		FrequencyPenalty: 0.2,
-		PresencePenalty:  0.0,
+		Model:       constants.CHATGPT_TEXT_MODEL,
+		Prompt:      text,
+		Temperature: 0,
+		MaxTokens:   100,
 	}
 }
