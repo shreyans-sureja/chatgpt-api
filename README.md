@@ -1,1 +1,1 @@
-# chatgtp-api
+# chatgpt-api
